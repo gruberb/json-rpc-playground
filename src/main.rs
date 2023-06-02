@@ -23,17 +23,17 @@ async fn main() -> anyhow::Result<()> {
     let url = format!("http://{}", server_addr);
 
     let middleware = tower::ServiceBuilder::new()
-	.layer(
-		TraceLayer::new_for_http()
-			.on_request(
-				|request: &hyper::Request<hyper::Body>, _span: &tracing::Span| tracing::info!(request = ?request, "on_request"),
-			)
-			.on_body_chunk(|chunk: &Bytes, latency: Duration, _: &tracing::Span| {
-				tracing::info!(size_bytes = chunk.len(), latency = ?latency, "sending body chunk")
-			})
-			.make_span_with(DefaultMakeSpan::new().include_headers(true))
-			.on_response(DefaultOnResponse::new().include_headers(true).latency_unit(LatencyUnit::Micros)),
-	);
+    .layer(
+    	TraceLayer::new_for_http()
+    		.on_request(
+    			|request: &hyper::Request<hyper::Body>, _span: &tracing::Span| tracing::info!(request = ?request, "on_request"),
+    		)
+    		.on_body_chunk(|chunk: &Bytes, latency: Duration, _: &tracing::Span| {
+    			tracing::info!(size_bytes = chunk.len(), latency = ?latency, "sending body chunk")
+    		})
+    		.make_span_with(DefaultMakeSpan::new().include_headers(true))
+    		.on_response(DefaultOnResponse::new().include_headers(true).latency_unit(LatencyUnit::Micros)),
+    );
 
     let client = HttpClientBuilder::default()
         .set_middleware(middleware)
@@ -42,7 +42,7 @@ async fn main() -> anyhow::Result<()> {
     let response: Result<String, _> = client.request("say_hello", params).await;
     tracing::info!("r: {:?}", response);
 
-    Ok(())
+    futures::future::pending().await
 }
 
 async fn run_server() -> anyhow::Result<SocketAddr> {
